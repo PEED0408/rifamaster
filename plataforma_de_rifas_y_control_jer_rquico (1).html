@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RifaMaster PRO - Control Oficial de Sorteos</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- jsPDF Library for PDF Receipt Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Canvas Confetti for Winner Animations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .number-btn {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Header & Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+      
+      <!-- Logo Brand -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-ticket text-2xl text-white transform -rotate-12"></i>
+        </div>
+        <div>
+          <h1 class="font-black text-lg sm:text-xl leading-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+            RifaMaster <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">PRO</span>
+          </h1>
+          <p class="text-xs text-slate-400 font-semibold hidden sm:block">Plataforma Oficial de Sorteos</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions & Direct WhatsApp -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Direct WhatsApp Contact -->
+        <button onclick="openDirectWhatsApp()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/20">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span class="hidden md:inline">Contacto WhatsApp</span>
+        </button>
+
+        <!-- Session Switcher / User Login Status -->
+        <div id="user-session-bar" class="flex items-center gap-2">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+
+    <!-- Sidebar Navigation Menu -->
+    <aside class="w-full md:w-64 flex-shrink-0 flex flex-col gap-3">
+      <nav class="w-full flex md:flex-col gap-2 glass-panel p-2.5 rounded-3xl overflow-x-auto md:overflow-x-visible">
+        
+        <button onclick="setActiveTab('play')" id="tab-btn-play" class="nav-btn active flex-1 md:flex-none flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+          <i class="fa-solid fa-gamepad text-indigo-400 text-lg"></i>
+          <span>Ver Sorteos</span>
+        </button>
+
+        <button onclick="setActiveTab('help')" id="tab-btn-help" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+          <i class="fa-solid fa-circle-question text-amber-400 text-lg"></i>
+          <span>¿Cómo Participar?</span>
+        </button>
+
+        <button onclick="setActiveTab('my-tickets')" id="tab-btn-my-tickets" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+          <i class="fa-solid fa-receipt text-emerald-400 text-lg"></i>
+          <span>Mis Boletos</span>
+        </button>
+
+        <button onclick="setActiveTab('draw-center')" id="tab-btn-draw-center" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+          <i class="fa-solid fa-trophy text-amber-400 text-lg"></i>
+          <span>Sorteo y Ganadores</span>
+        </button>
+
+        <!-- Admin Only Menu Items -->
+        <div id="admin-menu-section" class="flex flex-col gap-2 w-full pt-2 border-t border-slate-800">
+          <div class="px-3 py-1 text-[11px] font-black tracking-wider text-slate-400 uppercase">Panel de Administración</div>
+
+          <button onclick="setActiveTab('pending-payments')" id="tab-btn-pending-payments" class="nav-btn flex-1 md:flex-none flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+            <div class="flex items-center gap-2.5">
+              <i class="fa-solid fa-clock-rotate-left text-rose-400 text-base"></i>
+              <span>Aprobar Pagos</span>
+            </div>
+            <span id="pending-payments-count" class="px-2.5 py-0.5 text-xs bg-rose-500/20 text-rose-300 font-extrabold rounded-full border border-rose-500/30">0</span>
+          </button>
+
+          <button onclick="setActiveTab('manage-raffles')" id="tab-btn-manage-raffles" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+            <i class="fa-solid fa-plus-circle text-purple-400 text-base"></i>
+            <span>Publicar / Pausar Rifas</span>
+          </button>
+
+          <button onclick="setActiveTab('manage-users')" id="tab-btn-manage-users" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+            <i class="fa-solid fa-users-gear text-sky-400 text-base"></i>
+            <span>Gestión Usuarios</span>
+          </button>
+
+          <button onclick="setActiveTab('business-config')" id="tab-btn-business-config" class="nav-btn flex-1 md:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all text-slate-300 hover:bg-slate-800/80 whitespace-nowrap">
+            <i class="fa-solid fa-wallet text-emerald-400 text-base"></i>
+            <span>Datos de Pago (Alias)</span>
+          </button>
+
+          <!-- Super Admin Only Audit Button -->
+          <button id="superadmin-audit-btn" onclick="setActiveTab('superadmin-audit')" class="nav-btn hidden flex-1 md:flex-none flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 whitespace-nowrap">
+            <i class="fa-solid fa-shield-halved text-amber-400 text-base"></i>
+            <span>Auditoría de Borrados</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Security Status Box -->
+      <div class="hidden md:block glass-panel p-4 rounded-3xl border-l-4 border-l-amber-500">
+        <div class="flex items-center gap-2 text-amber-400 font-extrabold text-xs mb-1">
+          <i class="fa-solid fa-shield"></i>
+          Super Admin Inviolable
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed font-medium">
+          El creador del sistema posee inmunidad permanente. Ningún otro usuario ni administrador secundario puede eliminarlo.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Views -->
+    <main class="flex-1 min-w-0">
+
+      <!-- TAB 1: VER SORTEOS -->
+      <section id="view-play" class="tab-content flex flex-col gap-6">
+        <!-- Hero Banner -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 p-6 sm:p-8 border border-indigo-500/30 shadow-2xl">
+          <div class="relative z-10 max-w-xl">
+            <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 mb-3">
+              <i class="fa-solid fa-sparkles"></i> Venta Abierta Bajo Control del Admin
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+              Elige tu Número de la Suerte
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+              Las rifas son habilitadas manualmente por el administrador. Selecciona tus números y abona con tu saldo cargado o mediante reserva por transferencia.
+            </p>
+          </div>
+          <i class="fa-solid fa-ticket absolute -bottom-10 -right-10 text-9xl text-white/5 transform -rotate-12 pointer-events-none"></i>
+        </div>
+
+        <!-- User Balance Bar -->
+        <div class="glass-panel p-4 rounded-3xl flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <i class="fa-solid fa-wallet text-xl"></i>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block font-bold">Mi Saldo Disponible</span>
+              <span id="user-balance-display" class="text-2xl font-black text-emerald-400">$0.00</span>
+            </div>
+          </div>
+
+          <button onclick="openDirectWhatsApp('Hola, quisiera solicitar la carga de saldo en mi cuenta')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-2xl transition-all shadow-lg flex items-center gap-2">
+            <i class="fa-brands fa-whatsapp text-base"></i> Solicitar Carga de Saldo
+          </button>
+        </div>
+
+        <!-- Catalog Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="raffles-catalog">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- TAB 2: APARTADO DE AYUDA PASO A PASO (PARA PERSONAS MAYORES) -->
+      <section id="view-help" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/30">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <i class="fa-solid fa-circle-question text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-white">¿Cómo Participar en las Rifas?</h2>
+              <p class="text-xs sm:text-sm text-slate-400 font-medium">Instrucciones sencillas paso a paso para jugar sin complicaciones.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-lg flex items-center justify-center">1</div>
+              <h3 class="text-base font-bold text-white">Esperar el Aviso</h3>
+              <p class="text-xs text-slate-300 leading-relaxed font-medium">
+                El Administrador anunciará por WhatsApp o en el grupo cuando la rifa esté oficialmente habilitada para comprar.
+              </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-600 text-white font-black text-lg flex items-center justify-center">2</div>
+              <h3 class="text-base font-bold text-white">Elegir Número</h3>
+              <p class="text-xs text-slate-300 leading-relaxed font-medium">
+                Selecciona tu número favorito en la pantalla y presiona en la casilla que dice <b>"¿DESEAS COMPRAR?"</b> confirmando el precio exacto.
+              </p>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-black text-lg flex items-center justify-center">3</div>
+              <h3 class="text-base font-bold text-white">Abonar o Transferir</h3>
+              <p class="text-xs text-slate-300 leading-relaxed font-medium">
+                Paga directamente con tu saldo o presiona <b>"Copiar Alias"</b> para transferir desde tu billetera virtual y enviar el comprobante por WhatsApp.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-8 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <i class="fa-brands fa-whatsapp text-3xl text-emerald-400"></i>
+              <div>
+                <h4 class="font-bold text-sm text-white">¿Tienes alguna duda o necesitas ayuda?</h4>
+                <p class="text-xs text-slate-400">Toca el botón para hablar directamente con el Administrador.</p>
+              </div>
+            </div>
+            <button onclick="openDirectWhatsApp('Hola, necesito ayuda para participar en la rifa')" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-lg whitespace-nowrap">
+              Escribir al WhatsApp
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: MIS BOLETOS Y COMPROBANTES PDF -->
+      <section id="view-my-tickets" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 rounded-3xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-emerald-400"></i> Mis Boletos y Comprobantes PDF
+              </h2>
+              <p class="text-xs text-slate-400">Descarga tu boleto oficial en PDF para guardarlo en tu celular.</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400 block">Boletos Activos:</span>
+              <span id="my-tickets-count" class="text-xl font-black text-brand-500">0</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 uppercase text-[10px] text-slate-400 font-extrabold tracking-wider">
+                <tr>
+                  <th class="p-4 rounded-l-xl">Sorteo / Rifa</th>
+                  <th class="p-4">Número</th>
+                  <th class="p-4">Código Único</th>
+                  <th class="p-4">Precio</th>
+                  <th class="p-4">Estado</th>
+                  <th class="p-4 rounded-r-xl text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="my-tickets-table-body" class="divide-y divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CENTRO DE SORTEO AUTOMÁTICO Y PODIO DE 4 GANADORES -->
+      <section id="view-draw-center" class="tab-content hidden flex flex-col gap-6">
+        <!-- Podio de los 4 Ganadores -->
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/30">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <i class="fa-solid fa-crown mr-1"></i> Sorteo Oficial
+              </span>
+              <h2 class="text-2xl font-black text-white mt-1">Podio de los 4 Ganadores</h2>
+              <p class="text-xs text-slate-400">Resultados registrados de forma transparente e inmutable.</p>
+            </div>
+            <i class="fa-solid fa-trophy text-5xl text-amber-500/20"></i>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="podium-winners-grid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Ruleta Digital de Sorteo -->
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center text-center">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-dharmachakra text-purple-400"></i> Ruleta Digital de Elección Aleatoria
+          </h3>
+          <p class="text-xs text-slate-400 max-w-md mb-6">
+            Selecciona una rifa con boletos comprados para ejecutar el sorteo en vivo. La ruleta elegirá al azar entre los participantes aprobados.
+          </p>
+
+          <div class="w-full max-w-sm mb-6 flex flex-col gap-2">
+            <label class="text-xs font-bold text-slate-300 text-left">Seleccionar Rifa para Sortear:</label>
+            <select id="draw-raffle-select" class="bg-slate-900 border border-slate-700 text-xs rounded-xl p-3 text-slate-100 font-bold focus:ring-2 focus:ring-purple-500">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- Display de la Ruleta -->
+          <div class="relative w-60 h-60 my-4 flex items-center justify-center border-4 border-purple-500/40 rounded-full bg-slate-900 shadow-2xl">
+            <div class="absolute -top-3 z-30 text-amber-400 text-3xl filter drop-shadow">
+              <i class="fa-solid fa-caret-down"></i>
+            </div>
+            <div id="roulette-display-number" class="text-6xl font-mono font-black text-amber-400 tracking-wider">
+              00
+            </div>
+          </div>
+
+          <div id="draw-winner-announcement" class="hidden my-4 p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-sm font-extrabold animate-bounce">
+            <!-- Winner details -->
+          </div>
+
+          <button id="btn-trigger-draw" onclick="executeAutomatedDraw()" class="px-8 py-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-brand-600 hover:from-purple-500 hover:to-brand-500 text-white font-black text-sm rounded-2xl shadow-xl shadow-purple-600/30 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-play"></i> Ejecutar Sorteo Automático
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 5: APROBAR PAGOS PENDIENTES (ADMIN) -->
+      <section id="view-pending-payments" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 rounded-3xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-rose-400"></i> Pagos y Reservas Pendientes
+              </h2>
+              <p class="text-xs text-slate-400">Revisa las reservas de 5 minutos realizadas por los clientes por transferencia.</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 uppercase text-[10px] text-slate-400 font-extrabold">
+                <tr>
+                  <th class="p-4 rounded-l-xl">Usuario</th>
+                  <th class="p-4">Rifa</th>
+                  <th class="p-4">Número</th>
+                  <th class="p-4">Monto</th>
+                  <th class="p-4">Tiempo Restante</th>
+                  <th class="p-4 rounded-r-xl text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="pending-payments-table-body" class="divide-y divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: PUBLICAR / PAUSAR RIFAS (ADMIN) -->
+      <section id="view-manage-raffles" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 rounded-3xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-purple-400"></i> Gestión de Rifas e Interruptor de Venta
+              </h2>
+              <p class="text-xs text-slate-400">Crea rifas con precio fijo o controla su apertura y pausa en vivo.</p>
+            </div>
+
+            <button onclick="openCreateRaffleModal()" class="px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-2xl transition-all shadow-lg flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> Publicar Nueva Rifa
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 uppercase text-[10px] text-slate-400 font-extrabold">
+                <tr>
+                  <th class="p-4 rounded-l-xl">Título de la Rifa</th>
+                  <th class="p-4">Precio Boleto</th>
+                  <th class="p-4">Premio</th>
+                  <th class="p-4">Boletos</th>
+                  <th class="p-4">Estado Venta</th>
+                  <th class="p-4 rounded-r-xl text-right">Acción Interruptor</th>
+                </tr>
+              </thead>
+              <tbody id="admin-raffles-table-body" class="divide-y divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: GESTIÓN DE USUARIOS (ADMIN Y ASISTENCIA PERSONAS MAYORES) -->
+      <section id="view-manage-users" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 rounded-3xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-users-gear text-sky-400"></i> Usuarios Registrados y Asistencia
+              </h2>
+              <p class="text-xs text-slate-400">Crea usuarios para personas mayores o administra permisos.</p>
+            </div>
+
+            <button onclick="openCreateUserModal()" class="px-5 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-2xl transition-all shadow-lg flex items-center gap-2">
+              <i class="fa-solid fa-user-plus"></i> Registrar Usuario Asistido
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 uppercase text-[10px] text-slate-400 font-extrabold">
+                <tr>
+                  <th class="p-4 rounded-l-xl">Nombre Completo</th>
+                  <th class="p-4">Correo Electrónico</th>
+                  <th class="p-4">Teléfono</th>
+                  <th class="p-4">Rol</th>
+                  <th class="p-4">Saldo</th>
+                  <th class="p-4 rounded-r-xl text-right">Jerarquía</th>
+                </tr>
+              </thead>
+              <tbody id="all-users-table-body" class="divide-y divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 8: CONFIGURACIÓN DE DATOS DE PAGO (ADMIN) -->
+      <section id="view-business-config" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-2xl border border-emerald-500/30">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <i class="fa-solid fa-wallet text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-white">Configuración de Datos de Pago</h2>
+              <p class="text-xs text-slate-400">Edita tu Alias, CBU, Titular y WhatsApp sin necesidad de tocar código.</p>
+            </div>
+          </div>
+
+          <form id="business-config-form" onsubmit="handleSaveBusinessConfig(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1.5">Alias de Transferencia (Mercado Pago / Banco)</label>
+              <input type="text" id="cfg-alias" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 font-bold focus:ring-2 focus:ring-emerald-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1.5">CBU / CVU (Opcional)</label>
+              <input type="text" id="cfg-cbu" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 font-bold focus:ring-2 focus:ring-emerald-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1.5">Nombre del Titular de la Cuenta</label>
+              <input type="text" id="cfg-holder" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 font-bold focus:ring-2 focus:ring-emerald-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-1.5">Número de WhatsApp de Contacto</label>
+              <input type="text" id="cfg-whatsapp" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 font-bold focus:ring-2 focus:ring-emerald-500" />
+            </div>
+
+            <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Datos de Pago
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 9: AUDITORÍA DE BORRADOS (EXCLUSIVO SUPER ADMIN) -->
+      <section id="view-superadmin-audit" class="tab-content hidden flex flex-col gap-6">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/40">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <span class="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <i class="fa-solid fa-eye mr-1"></i> Seguridad Permanente
+              </span>
+              <h2 class="text-2xl font-black text-white mt-1">Historial Invariable de Boletos Borrados</h2>
+              <p class="text-xs text-slate-400">Aunque el cliente elimine un boleto de su vista personal, se conserva la copia aquí para ti.</p>
+            </div>
+            <i class="fa-solid fa-shield-cat text-5xl text-amber-500/20"></i>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900 uppercase text-[10px] text-slate-400 font-extrabold">
+                <tr>
+                  <th class="p-4 rounded-l-xl">Usuario Registrado</th>
+                  <th class="p-4">Rifa</th>
+                  <th class="p-4">Número</th>
+                  <th class="p-4">Código Ticket</th>
+                  <th class="p-4">Fecha Eliminado</th>
+                  <th class="p-4 rounded-r-xl text-center">Estado Auditoría</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tickets-table-body" class="divide-y divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL 1: REGISTRO DE USUARIO NUEVO (VALIDA CORREO ÚNICO) -->
+  <div id="modal-register" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 sm:p-8 border border-slate-700 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-brand-500"></i> Crear Tu Cuenta
+        </h3>
+        <button onclick="closeModal('modal-register')" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="register-form" onsubmit="handleUserSelfRegister(event)" class="space-y-4 mt-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Nombre Completo</label>
+          <input type="text" id="reg-fullname" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico Único</label>
+          <input type="email" id="reg-email" required placeholder="juan@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500" />
+          <span class="text-[10px] text-slate-500 mt-0.5 block">Se permite únicamente 1 cuenta por correo electrónico.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Teléfono (WhatsApp)</label>
+          <input type="text" id="reg-phone" required placeholder="Ej. 3888670268" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
+          <input type="password" id="reg-pass" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs rounded-xl transition-all shadow-lg">
+          Completar Registro
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: SELECCIÓN Y CONFIRMACIÓN "¿DESEAS COMPRAR?" -->
+  <div id="modal-play-raffle" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-2xl w-full rounded-3xl p-6 border border-slate-700 shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <div class="flex items-start justify-between pb-4 border-b border-slate-800">
+        <div>
+          <h3 id="modal-raffle-title" class="text-xl font-black text-white">Título de Rifa</h3>
+          <p id="modal-raffle-prize" class="text-xs text-amber-400 font-bold">Premio: $0</p>
+        </div>
+        <button onclick="closeModal('modal-play-raffle')" class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Numbers Grid -->
+      <div class="py-4 flex-1 overflow-y-auto">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold text-slate-300">Toca el número deseado:</span>
+          <button onclick="pickRandomNumber()" class="text-xs px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 rounded-xl transition-all flex items-center gap-1.5 font-bold">
+            <i class="fa-solid fa-dice text-amber-400"></i> Al Azar
+          </button>
+        </div>
+
+        <div id="numbers-grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2 p-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Purchase Options Box with Copy Alias -->
+      <div class="pt-4 border-t border-slate-800 flex flex-col gap-4">
+        <div class="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="text-xs text-slate-400 block font-bold">Datos para Transferencia:</span>
+            <span class="text-xs text-emerald-400 font-extrabold block" id="modal-alias-display">Alias: Carga tu Alias</span>
+            <span class="text-[11px] text-slate-400" id="modal-holder-display">Titular: Nombre</span>
+          </div>
+          <button onclick="copyAliasToClipboard()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <i class="fa-solid fa-copy"></i> Copiar Alias
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <span class="text-xs text-slate-400">Seleccionado:</span>
+            <span id="selected-number-display" class="ml-2 font-mono font-black text-xl text-amber-400">Ninguno</span>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button id="btn-buy-balance" onclick="confirmPurchase('BALANCE')" disabled class="flex-1 sm:flex-none px-5 py-3 bg-slate-800 text-slate-500 cursor-not-allowed font-black text-xs rounded-xl transition-all">
+              ¿DESEAS COMPRAR? (Saldo)
+            </button>
+            <button id="btn-reserve-transfer" onclick="confirmPurchase('RESERVE')" disabled class="flex-1 sm:flex-none px-5 py-3 bg-slate-800 text-slate-500 cursor-not-allowed font-black text-xs rounded-xl transition-all">
+              ¿DESEAS COMPRAR? (5 Min Transferencia)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CREAR USUARIO ASISTIDO (ADMIN) -->
+  <div id="modal-create-user" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 border border-slate-700 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-sky-400"></i> Registrar Usuario Asistido
+        </h3>
+        <button onclick="closeModal('modal-create-user')" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="admin-create-user-form" onsubmit="handleAdminCreateUser(event)" class="space-y-4 mt-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Nombre Completo</label>
+          <input type="text" id="adm-fullname" required placeholder="Ej. Pedro Gómez" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico Único</label>
+          <input type="email" id="adm-email" required placeholder="pedro@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Teléfono</label>
+          <input type="text" id="adm-phone" required placeholder="3888670268" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Rol</label>
+          <select id="adm-role" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100">
+            <option value="USER">Usuario (Cliente)</option>
+            <option value="ADMIN">Administrador Secundario</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Saldo Inicial ($)</label>
+          <input type="number" id="adm-balance" value="0" min="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-create-user')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl">Crear Cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PUBLICAR NUEVA RIFA (ADMIN) -->
+  <div id="modal-create-raffle" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 border border-slate-700 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-ticket text-purple-400"></i> Publicar Nueva Rifa
+        </h3>
+        <button onclick="closeModal('modal-create-raffle')" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="admin-create-raffle-form" onsubmit="handleAdminCreateRaffle(event)" class="space-y-4 mt-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Título del Sorteo</label>
+          <input type="text" id="raf-title" required placeholder="Ej. Gran Rifa Navideña" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Precio Fijo ($)</label>
+            <input type="number" id="raf-price" value="500" min="1" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Premio ($)</label>
+            <input type="number" id="raf-prize" value="25000" min="1" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Cantidad de Números</label>
+          <input type="number" id="raf-total" value="100" min="5" max="200" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100" />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeModal('modal-create-raffle')" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl">Publicar Rifa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC ENGINE -->
+  <script>
+    const USERS_KEY = 'rm_users_clean_v5';
+    const RAFFLES_KEY = 'rm_raffles_clean_v5';
+    const TICKETS_KEY = 'rm_tickets_clean_v5';
+    const WINNERS_KEY = 'rm_winners_clean_v5';
+    const CONFIG_KEY = 'rm_business_config_v5';
+    const ACTIVE_USER_KEY = 'rm_active_user_clean_v5';
+
+    const ROLES = {
+      SUPER_ADMIN: 'SUPER_ADMIN',
+      ADMIN: 'ADMIN',
+      USER: 'USER'
+    };
+
+    // Clean initial Super Admin user with full immunity
+    const DEFAULT_SUPER_ADMIN = {
+      id: 'usr-superadmin',
+      fullName: 'Super Admin (Propietario)',
+      email: 'admin@rifamaster.com',
+      phone: '3888670268',
+      role: ROLES.SUPER_ADMIN,
+      balance: 10000,
+      isSuperAdmin: true
+    };
+
+    const DEFAULT_CONFIG = {
+      alias: 'RIFAMASTER.MP',
+      cbu: '00000031000888670268',
+      holder: 'Propietario RifaMaster',
+      whatsapp: '3888670268'
+    };
+
+    let state = {
+      users: [],
+      raffles: [],
+      tickets: [],
+      winners: [],
+      config: DEFAULT_CONFIG,
+      activeUserId: null,
+      activeTab: 'play',
+      selectedRaffleForModal: null,
+      selectedNumber: null
+    };
+
+    let timerInterval = null;
+
+    window.onload = function() {
+      loadInitialState();
+      startReservationTimerEngine();
+      renderApp();
+    };
+
+    function loadInitialState() {
+      const u = localStorage.getItem(USERS_KEY);
+      const r = localStorage.getItem(RAFFLES_KEY);
+      const t = localStorage.getItem(TICKETS_KEY);
+      const w = localStorage.getItem(WINNERS_KEY);
+      const c = localStorage.getItem(CONFIG_KEY);
+      const active = localStorage.getItem(ACTIVE_USER_KEY);
+
+      state.users = u ? JSON.parse(u) : [DEFAULT_SUPER_ADMIN];
+      state.raffles = r ? JSON.parse(r) : []; // Starts clean, no fake raffles
+      state.tickets = t ? JSON.parse(t) : [];
+      state.winners = w ? JSON.parse(w) : [];
+      state.config = c ? JSON.parse(c) : DEFAULT_CONFIG;
+
+      ensureSuperAdminImmunity();
+
+      state.activeUserId = (active && state.users.some(x => x.id === active)) ? active : state.users[0].id;
+      saveState();
+    }
+
+    function saveState() {
+      localStorage.setItem(USERS_KEY, JSON.stringify(state.users));
+      localStorage.setItem(RAFFLES_KEY, JSON.stringify(state.raffles));
+      localStorage.setItem(TICKETS_KEY, JSON.stringify(state.tickets));
+      localStorage.setItem(WINNERS_KEY, JSON.stringify(state.winners));
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(state.config));
+      localStorage.setItem(ACTIVE_USER_KEY, state.activeUserId);
+    }
+
+    function ensureSuperAdminImmunity() {
+      let superAdmin = state.users.find(u => u.isSuperAdmin || u.role === ROLES.SUPER_ADMIN);
+      if (!superAdmin) {
+        superAdmin = DEFAULT_SUPER_ADMIN;
+        state.users.unshift(superAdmin);
+      } else {
+        superAdmin.role = ROLES.SUPER_ADMIN;
+        superAdmin.isSuperAdmin = true;
+      }
+    }
+
+    function getActiveUser() {
+      return state.users.find(u => u.id === state.activeUserId) || state.users[0];
+    }
+
+    function isSuperAdmin(user = getActiveUser()) {
+      return user.isSuperAdmin || user.role === ROLES.SUPER_ADMIN;
+    }
+
+    function isAdmin(user = getActiveUser()) {
+      return user.role === ROLES.ADMIN || isSuperAdmin(user);
+    }
+
+    function switchUserSession(userId) {
+      state.activeUserId = userId;
+      saveState();
+      showToast(`Sesión cambiada a: ${getActiveUser().fullName}`, 'info');
+
+      if (!isAdmin() && (state.activeTab === 'manage-users' || state.activeTab === 'manage-raffles' || state.activeTab === 'pending-payments' || state.activeTab === 'business-config' || state.activeTab === 'superadmin-audit')) {
+        state.activeTab = 'play';
+      }
+      renderApp();
+    }
+
+    // Engine for 5-minute reservations timer
+    function startReservationTimerEngine() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const now = Date.now();
+        let changed = false;
+
+        state.tickets.forEach(t => {
+          if (t.status === 'RESERVED' && t.expiresAt) {
+            if (now >= t.expiresAt) {
+              t.status = 'EXPIRED';
+              changed = true;
+              showToast(`La reserva del boleto #${t.number} expiró por tiempo.`, 'warning');
+            }
+          }
+        });
+
+        if (changed) {
+          state.tickets = state.tickets.filter(t => t.status !== 'EXPIRED');
+          saveState();
+          renderApp();
+        } else {
+          updatePendingTimers();
+        }
+      }, 1000);
+    }
+
+    function renderApp() {
+      const activeUser = getActiveUser();
+
+      // Session Switcher Bar
+      const sessionBar = document.getElementById('user-session-bar');
+      sessionBar.innerHTML = `
+        <select onchange="switchUserSession(this.value)" class="bg-slate-900 border border-slate-700 text-xs font-bold text-slate-100 rounded-xl px-3 py-2 cursor-pointer focus:ring-2 focus:ring-brand-500">
+          ${state.users.map(u => `
+            <option value="${u.id}" ${u.id === activeUser.id ? 'selected' : ''}>
+              ${u.fullName} (${u.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : u.role})
+            </option>
+          `).join('')}
+        </select>
+        <button onclick="openModal('modal-register')" class="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow-md">
+          <i class="fa-solid fa-user-plus mr-1"></i> Registrarse
+        </button>
+      `;
+
+      // Admin Section Menu Visibility
+      document.getElementById('admin-menu-section').classList.toggle('hidden', !isAdmin());
+
+      // SuperAdmin Audit Button Visibility
+      const auditBtn = document.getElementById('superadmin-audit-btn');
+      if (isSuperAdmin()) auditBtn.classList.remove('hidden');
+      else auditBtn.classList.add('hidden');
+
+      // Pending badge
+      const pendingCount = state.tickets.filter(t => t.status === 'RESERVED').length;
+      document.getElementById('pending-payments-count').innerText = pendingCount;
+
+      // Balance Display
+      document.getElementById('user-balance-display').innerText = `$${activeUser.balance.toFixed(2)}`;
+
+      // Nav Buttons Active State
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-600', 'text-white', 'shadow-lg');
+        btn.classList.add('text-slate-300');
+      });
+      const currentBtn = document.getElementById(`tab-btn-${state.activeTab}`);
+      if (currentBtn) currentBtn.classList.add('bg-brand-600', 'text-white', 'shadow-lg');
+
+      // Show/Hide Tabs
+      document.querySelectorAll('.tab-content').forEach(v => v.classList.add('hidden'));
+      const currentView = document.getElementById(`view-${state.activeTab}`);
+      if (currentView) currentView.classList.remove('hidden');
+
+      // Render Specific Tab Content
+      renderRafflesCatalog();
+      renderMyTickets();
+      renderPodiumWinners();
+
+      if (isAdmin()) {
+        renderPendingPaymentsTable();
+        renderManageRafflesTable();
+        renderManageUsersTable();
+        loadBusinessConfigForm();
+      }
+
+      if (isSuperAdmin()) {
+        renderAuditTable();
+      }
+    }
+
+    function setActiveTab(tab) {
+      state.activeTab = tab;
+      renderApp();
+    }
+
+    // --- TAB 1: RIFAS ---
+    function renderRafflesCatalog() {
+      const container = document.getElementById('raffles-catalog');
+
+      if (state.raffles.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full glass-panel p-8 rounded-3xl text-center">
+            <i class="fa-solid fa-ticket-simple text-4xl text-slate-600 mb-3 block"></i>
+            <h3 class="text-lg font-bold text-white">No hay rifas publicadas en este momento</h3>
+            <p class="text-xs text-slate-400 mt-1">El Administrador avisará cuando se publique un nuevo sorteo.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.raffles.map(raffle => {
+        const soldCount = state.tickets.filter(t => t.raffleId === raffle.id && t.status !== 'DELETED_BY_USER').length;
+        const progress = Math.round((soldCount / raffle.totalNumbers) * 100);
+        const isActive = raffle.status === 'ACTIVE';
+
+        return `
+          <div class="glass-panel p-6 rounded-3xl flex flex-col justify-between hover:border-slate-600 transition-all">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                  Rifa Oficial
+                </span>
+                <span class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                  Premio: $${raffle.prize}
+                </span>
+              </div>
+
+              <h3 class="text-xl font-black text-white">${raffle.title}</h3>
+
+              <div class="mt-4 space-y-1.5">
+                <div class="flex justify-between text-xs text-slate-400 font-bold">
+                  <span>Vendidos: ${soldCount}/${raffle.totalNumbers}</span>
+                  <span>${progress}%</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                  <div class="bg-gradient-to-r from-brand-500 to-emerald-400 h-2.5 rounded-full" style="width: ${progress}%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 block font-bold">Precio Fijo</span>
+                <span class="text-xl font-black text-white">$${raffle.ticketPrice}</span>
+              </div>
+
+              ${isActive 
+                ? `<button onclick="openPlayRaffleModal('${raffle.id}')" class="px-5 py-3 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-2xl shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-hand-pointer"></i> Elegir Número
+                   </button>`
+                : `<span class="px-4 py-2.5 bg-rose-500/10 text-rose-300 text-xs font-black rounded-2xl border border-rose-500/20">
+                    <i class="fa-solid fa-lock mr-1"></i> Ventas Pausadas
+                   </span>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openPlayRaffleModal(raffleId) {
+      const raffle = state.raffles.find(r => r.id === raffleId);
+      if (!raffle || raffle.status !== 'ACTIVE') return;
+
+      state.selectedRaffleForModal = raffle;
+      state.selectedNumber = null;
+
+      document.getElementById('modal-raffle-title').innerText = raffle.title;
+      document.getElementById('modal-raffle-prize').innerText = `Premio Especial: $${raffle.prize}`;
+      document.getElementById('modal-alias-display').innerText = `Alias: ${state.config.alias}`;
+      document.getElementById('modal-holder-display').innerText = `Titular: ${state.config.holder}`;
+      document.getElementById('selected-number-display').innerText = 'Ninguno';
+
+      disablePurchaseButtons();
+
+      const takenNumbers = state.tickets
+        .filter(t => t.raffleId === raffle.id && t.status !== 'DELETED_BY_USER')
+        .map(t => t.number);
+
+      const grid = document.getElementById('numbers-grid');
+      let html = '';
+      for (let i = 1; i <= raffle.totalNumbers; i++) {
+        const isTaken = takenNumbers.includes(i);
+        html += `
+          <button 
+            onclick="selectRaffleNumber(${i})" 
+            ${isTaken ? 'disabled' : ''}
+            id="num-btn-${i}"
+            class="number-btn aspect-square rounded-2xl text-xs font-black transition-all flex items-center justify-center border
+            ${isTaken ? 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed line-through' : 'bg-slate-800 border-slate-700 text-slate-200 hover:border-brand-500 hover:bg-slate-700'}"
+          >
+            ${i < 10 ? '0' + i : i}
+          </button>
+        `;
+      }
+
+      grid.innerHTML = html;
+      openModal('modal-play-raffle');
+    }
+
+    function selectRaffleNumber(num) {
+      state.selectedNumber = num;
+      const raffle = state.selectedRaffleForModal;
+
+      document.querySelectorAll('.number-btn').forEach(b => {
+        if (!b.disabled) b.classList.remove('bg-amber-500', 'text-slate-950', 'ring-2', 'ring-amber-300');
+      });
+
+      const btn = document.getElementById(`num-btn-${num}`);
+      if (btn) btn.classList.add('bg-amber-500', 'text-slate-950', 'ring-2', 'ring-amber-300');
+
+      document.getElementById('selected-number-display').innerText = num < 10 ? '0' + num : num;
+
+      const btnBal = document.getElementById('btn-buy-balance');
+      const btnRes = document.getElementById('btn-reserve-transfer');
+
+      btnBal.disabled = false;
+      btnBal.innerHTML = `¿DESEAS COMPRAR (#${num})? <br><span class="text-[10px] text-emerald-300">$${raffle.ticketPrice} Con Saldo</span>`;
+      btnBal.className = "flex-1 sm:flex-none px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-2xl shadow-lg transition-all cursor-pointer";
+
+      btnRes.disabled = false;
+      btnRes.innerHTML = `¿DESEAS COMPRAR (#${num})? <br><span class="text-[10px] text-amber-300">$${raffle.ticketPrice} (5 Min Transferencia)</span>`;
+      btnRes.className = "flex-1 sm:flex-none px-5 py-3 bg-amber-600 hover:bg-amber-500 text-white font-black text-xs rounded-2xl shadow-lg transition-all cursor-pointer";
+    }
+
+    function disablePurchaseButtons() {
+      const btnBal = document.getElementById('btn-buy-balance');
+      const btnRes = document.getElementById('btn-reserve-transfer');
+      btnBal.disabled = true;
+      btnBal.innerHTML = `¿DESEAS COMPRAR?`;
+      btnBal.className = "flex-1 sm:flex-none px-5 py-3 bg-slate-800 text-slate-500 cursor-not-allowed font-black text-xs rounded-2xl";
+      
+      btnRes.disabled = true;
+      btnRes.innerHTML = `¿DESEAS COMPRAR?`;
+      btnRes.className = "flex-1 sm:flex-none px-5 py-3 bg-slate-800 text-slate-500 cursor-not-allowed font-black text-xs rounded-2xl";
+    }
+
+    function pickRandomNumber() {
+      const raffle = state.selectedRaffleForModal;
+      if (!raffle) return;
+      const taken = state.tickets.filter(t => t.raffleId === raffle.id && t.status !== 'DELETED_BY_USER').map(t => t.number);
+      const avail = [];
+      for (let i = 1; i <= raffle.totalNumbers; i++) {
+        if (!taken.includes(i)) avail.push(i);
+      }
+      if (avail.length === 0) return showToast('No quedan números libres.', 'warning');
+      selectRaffleNumber(avail[Math.floor(Math.random() * avail.length)]);
+    }
+
+    function copyAliasToClipboard() {
+      const text = state.config.alias;
+      const dummy = document.createElement("textarea");
+      document.body.appendChild(dummy);
+      dummy.value = text;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+      showToast(`Alias "${text}" copiado al portapapeles.`, 'success');
+    }
+
+    function confirmPurchase(type) {
+      const activeUser = getActiveUser();
+      const raffle = state.selectedRaffleForModal;
+      const num = state.selectedNumber;
+
+      if (!raffle || !num) return;
+
+      const ticketCode = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
+
+      if (type === 'BALANCE') {
+        if (activeUser.balance < raffle.ticketPrice) {
+          showToast(`Saldo insuficiente ($${activeUser.balance}). Carga saldo o utiliza la reserva por transferencia.`, 'error');
+          return;
+        }
+        activeUser.balance -= raffle.ticketPrice;
+
+        const newTicket = {
+          id: 'tkt-' + Date.now(),
+          ticketCode: ticketCode,
+          raffleId: raffle.id,
+          raffleTitle: raffle.title,
+          userId: activeUser.id,
+          userName: activeUser.fullName,
+          number: num,
+          pricePaid: raffle.ticketPrice,
+          status: 'PAID',
+          date: new Date().toLocaleDateString('es-ES', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        state.tickets.push(newTicket);
+        saveState();
+        showToast(`¡Boleto #${num} comprado con éxito con tu saldo!`, 'success');
+      } else {
+        // 5 MIN RESERVATION
+        const expiresAt = Date.now() + (5 * 60 * 1000);
+        const reservedTicket = {
+          id: 'tkt-' + Date.now(),
+          ticketCode: ticketCode,
+          raffleId: raffle.id,
+          raffleTitle: raffle.title,
+          userId: activeUser.id,
+          userName: activeUser.fullName,
+          number: num,
+          pricePaid: raffle.ticketPrice,
+          status: 'RESERVED',
+          expiresAt: expiresAt,
+          date: new Date().toLocaleDateString('es-ES', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        state.tickets.push(reservedTicket);
+        saveState();
+        showToast(`Número #${num} reservado por 5 minutos. Realiza la transferencia y envía el comprobante por WhatsApp.`, 'warning');
+      }
+
+      closeModal('modal-play-raffle');
+      renderApp();
+    }
+
+    // --- TAB 2: MIS BOLETOS Y COMPROBANTE PDF ---
+    function renderMyTickets() {
+      const activeUser = getActiveUser();
+      const myTickets = state.tickets.filter(t => t.userId === activeUser.id && t.status !== 'DELETED_BY_USER');
+      document.getElementById('my-tickets-count').innerText = myTickets.length;
+
+      const tbody = document.getElementById('my-tickets-table-body');
+      if (myTickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 font-medium">No tienes boletos registrados aún.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = myTickets.map(t => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="p-4 font-bold text-white">${t.raffleTitle}</td>
+          <td class="p-4"><span class="font-mono font-black px-2.5 py-1 bg-amber-500/20 text-amber-300 rounded-lg">#${t.number < 10 ? '0' + t.number : t.number}</span></td>
+          <td class="p-4 font-mono text-slate-400 text-xs">${t.ticketCode}</td>
+          <td class="p-4 text-emerald-400 font-extrabold">$${t.pricePaid}</td>
+          <td class="p-4">
+            ${t.status === 'PAID' 
+              ? `<span class="px-2.5 py-1 text-[10px] bg-emerald-500/20 text-emerald-300 font-bold rounded-full border border-emerald-500/30">PAGADO</span>`
+              : `<span class="px-2.5 py-1 text-[10px] bg-amber-500/20 text-amber-300 font-bold rounded-full border border-amber-500/30">RESERVA PENDIENTE</span>`
+            }
+          </td>
+          <td class="p-4 text-right flex items-center justify-end gap-2">
+            <button onclick="downloadPDFTicket('${t.id}')" title="Descargar PDF" class="px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-300 text-xs font-bold rounded-xl border border-indigo-500/30 transition-all flex items-center gap-1">
+              <i class="fa-solid fa-file-pdf text-rose-400"></i> PDF
+            </button>
+            <button onclick="deleteTicketByUser('${t.id}')" title="Eliminar Comprobante" class="p-2 bg-slate-800 hover:bg-rose-500/30 text-slate-400 hover:text-rose-300 rounded-xl transition-all">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function downloadPDFTicket(ticketId) {
+      const ticket = state.tickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, 210, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text("COMPROBANTE OFICIAL DE BOLETO", 15, 25);
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+
+      doc.text(`Código de Ticket: ${ticket.ticketCode}`, 15, 55);
+      doc.text(`Rifa: ${ticket.raffleTitle}`, 15, 65);
+      doc.text(`Participante: ${ticket.userName}`, 15, 75);
+      doc.text(`Número Adquirido: #${ticket.number < 10 ? '0' + ticket.number : ticket.number}`, 15, 85);
+      doc.text(`Monto Abonado: $${ticket.pricePaid}`, 15, 95);
+      doc.text(`Estado: ${ticket.status === 'PAID' ? 'PAGADO / CONFIRMADO' : 'RESERVA PENDIENTE'}`, 15, 105);
+      doc.text(`Fecha de Emisión: ${ticket.date}`, 15, 115);
+
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(15, 125, 195, 125);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("RifaMaster PRO - Documento Oficial de Participación.", 15, 135);
+
+      doc.save(`Boleto_${ticket.ticketCode}.pdf`);
+      showToast('Descargando comprobante oficial PDF...', 'info');
+    }
+
+    function deleteTicketByUser(ticketId) {
+      const ticket = state.tickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      if (confirm('¿Deseas eliminar este comprobante de tu vista personal?')) {
+        ticket.status = 'DELETED_BY_USER';
+        ticket.deletedAt = new Date().toLocaleDateString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        saveState();
+        showToast('Comprobante eliminado de tu historial personal.', 'info');
+        renderApp();
+      }
+    }
+
+    // --- TAB 3: CENTRO DE SORTEO AUTOMÁTICO Y PODIO ---
+    function renderPodiumWinners() {
+      const grid = document.getElementById('podium-winners-grid');
+      const podium = state.winners.slice(0, 4);
+
+      if (podium.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-6 text-slate-500 text-xs font-bold">No hay ganadores registrados aún en el podio.</div>`;
+        return;
+      }
+
+      const colors = [
+        'from-amber-500/20 to-yellow-500/10 border-amber-500/40 text-amber-300',
+        'from-slate-400/20 to-slate-500/10 border-slate-400/40 text-slate-300',
+        'from-amber-700/20 to-amber-800/10 border-amber-700/40 text-amber-500',
+        'from-purple-500/20 to-indigo-500/10 border-purple-500/40 text-purple-300'
+      ];
+
+      grid.innerHTML = podium.map((w, index) => `
+        <div class="p-5 rounded-2xl bg-gradient-to-b ${colors[index] || colors[3]} border flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-black uppercase">${index + 1}º PUESTO</span>
+              <span class="font-mono text-xs font-extrabold px-2 py-0.5 bg-slate-900 rounded border border-white/10">Boleto #${w.number}</span>
+            </div>
+            <h4 class="font-black text-sm text-white">${w.userName}</h4>
+            <div class="text-[10px] text-slate-400 font-mono mt-0.5">${w.ticketCode}</div>
+          </div>
+          <div class="mt-4 pt-2 border-t border-white/10 text-xs font-bold text-emerald-400">
+            Premio: $${w.prize}
+          </div>
+        </div>
+      `).join('');
+
+      const select = document.getElementById('draw-raffle-select');
+      select.innerHTML = state.raffles.map(r => `<option value="${r.id}">${r.title} ($${r.prize})</option>`).join('');
+    }
+
+    function executeAutomatedDraw() {
+      const select = document.getElementById('draw-raffle-select');
+      const raffleId = select.value;
+      const raffle = state.raffles.find(r => r.id === raffleId);
+
+      if (!raffle) return;
+
+      const validTickets = state.tickets.filter(t => t.raffleId === raffle.id && t.status === 'PAID');
+
+      if (validTickets.length === 0) {
+        showToast('No existen boletos abonados para realizar el sorteo.', 'error');
+        return;
+      }
+
+      const triggerBtn = document.getElementById('btn-trigger-draw');
+      triggerBtn.disabled = true;
+
+      const numberDisplay = document.getElementById('roulette-display-number');
+      const announcement = document.getElementById('draw-winner-announcement');
+      announcement.classList.add('hidden');
+
+      let counter = 0;
+      const interval = setInterval(() => {
+        const randomTkt = validTickets[Math.floor(Math.random() * validTickets.length)];
+        numberDisplay.innerText = randomTkt.number < 10 ? '0' + randomTkt.number : randomTkt.number;
+        counter++;
+
+        if (counter > 30) {
+          clearInterval(interval);
+
+          const winningTicket = validTickets[Math.floor(Math.random() * validTickets.length)];
+          numberDisplay.innerText = winningTicket.number < 10 ? '0' + winningTicket.number : winningTicket.number;
+
+          const newWinner = {
+            id: 'win-' + Date.now(),
+            raffleTitle: raffle.title,
+            prize: raffle.prize,
+            userName: winningTicket.userName,
+            ticketCode: winningTicket.ticketCode,
+            number: winningTicket.number,
+            date: new Date().toLocaleDateString('es-ES')
+          };
+
+          state.winners.unshift(newWinner);
+          saveState();
+
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+
+          announcement.innerHTML = `<i class="fa-solid fa-trophy text-amber-400 mr-2"></i> ¡GANADOR/A: ${winningTicket.userName} con el Boleto #${winningTicket.number}!`;
+          announcement.classList.remove('hidden');
+
+          triggerBtn.disabled = false;
+          renderApp();
+        }
+      }, 60);
+    }
+
+    // --- TAB 5: APROBAR PAGOS RESERVADOS ---
+    function renderPendingPaymentsTable() {
+      const tbody = document.getElementById('pending-payments-table-body');
+      const pending = state.tickets.filter(t => t.status === 'RESERVED');
+
+      if (pending.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 font-bold">No hay pagos pendientes de revisión.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = pending.map(t => {
+        const remainingMs = Math.max(0, t.expiresAt - Date.now());
+        const seconds = Math.floor((remainingMs / 1000) % 60);
+        const minutes = Math.floor((remainingMs / 1000 / 60) % 60);
+        const timerText = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+        return `
+          <tr class="hover:bg-slate-800/40">
+            <td class="p-4 font-bold text-white">${t.userName}</td>
+            <td class="p-4 text-slate-300">${t.raffleTitle}</td>
+            <td class="p-4"><span class="font-mono font-bold px-2 py-0.5 bg-brand-500/20 text-brand-300 rounded">#${t.number}</span></td>
+            <td class="p-4 text-emerald-400 font-extrabold">$${t.pricePaid}</td>
+            <td class="p-4"><span class="font-mono text-xs font-bold text-amber-400 px-2.5 py-1 bg-amber-500/10 rounded-lg border border-amber-500/20"><i class="fa-solid fa-stopwatch mr-1"></i> ${timerText}</span></td>
+            <td class="p-4 text-right">
+              <button onclick="approvePayment('${t.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow">
+                <i class="fa-solid fa-check mr-1"></i> Aprobar Pago
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updatePendingTimers() {
+      if (state.activeTab === 'pending-payments') {
+        renderPendingPaymentsTable();
+      }
+    }
+
+    function approvePayment(ticketId) {
+      const ticket = state.tickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      ticket.status = 'PAID';
+      saveState();
+      showToast(`Pago del Boleto #${ticket.number} aprobado con éxito.`, 'success');
+      renderApp();
+    }
+
+    // --- TAB 6: PUBLICAR / PAUSAR RIFAS ---
+    function renderManageRafflesTable() {
+      const tbody = document.getElementById('admin-raffles-table-body');
+      tbody.innerHTML = state.raffles.map(r => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="p-4 font-bold text-white">${r.title}</td>
+          <td class="p-4 font-extrabold text-slate-200">$${r.ticketPrice}</td>
+          <td class="p-4 font-extrabold text-emerald-400">$${r.prize}</td>
+          <td class="p-4 font-bold text-brand-400">${state.tickets.filter(t => t.raffleId === r.id && t.status !== 'DELETED_BY_USER').length}/${r.totalNumbers}</td>
+          <td class="p-4">
+            <span class="px-2.5 py-1 text-[10px] font-black rounded-full ${r.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+              ${r.status === 'ACTIVE' ? 'VENTA ABIERTA' : 'PAUSADO'}
+            </span>
+          </td>
+          <td class="p-4 text-right">
+            <button onclick="toggleRaffleStatus('${r.id}')" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-xl font-bold">
+              ${r.status === 'ACTIVE' ? 'Pausar Venta' : 'Abrir Venta'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleRaffleStatus(id) {
+      const r = state.raffles.find(x => x.id === id);
+      if (!r) return;
+      r.status = r.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+      saveState();
+      showToast(`Estado de ${r.title} actualizado.`, 'info');
+      renderApp();
+    }
+
+    function openCreateRaffleModal() {
+      openModal('modal-create-raffle');
+    }
+
+    function handleAdminCreateRaffle(e) {
+      e.preventDefault();
+      const title = document.getElementById('raf-title').value.trim();
+      const price = parseFloat(document.getElementById('raf-price').value);
+      const prize = parseFloat(document.getElementById('raf-prize').value);
+      const totalNumbers = parseInt(document.getElementById('raf-total').value);
+
+      const newRaffle = {
+        id: 'raf-' + Date.now(),
+        title, ticketPrice: price, prize, totalNumbers, status: 'ACTIVE', createdAt: new Date().toISOString()
+      };
+
+      state.raffles.push(newRaffle);
+      saveState();
+      closeModal('modal-create-raffle');
+      showToast('Nueva Rifa publicada correctamente.', 'success');
+      renderApp();
+    }
+
+    // --- TAB 7: GESTIÓN DE USUARIOS Y REGISTRO ---
+    function renderManageUsersTable() {
+      const tbody = document.getElementById('all-users-table-body');
+      tbody.innerHTML = state.users.map(u => {
+        const isTargetSuperAdmin = u.isSuperAdmin || u.role === ROLES.SUPER_ADMIN;
+
+        return `
+          <tr class="hover:bg-slate-800/40">
+            <td class="p-4 font-bold text-white">${u.fullName}</td>
+            <td class="p-4 text-slate-400">${u.email}</td>
+            <td class="p-4 text-slate-400">${u.phone || 'N/A'}</td>
+            <td class="p-4"><span class="px-2.5 py-1 text-[10px] font-black rounded-full ${isTargetSuperAdmin ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300'}">${u.role}</span></td>
+            <td class="p-4 font-bold text-emerald-400">$${u.balance}</td>
+            <td class="p-4 text-right">
+              ${isTargetSuperAdmin 
+                ? `<span class="text-[10px] text-amber-400 font-extrabold px-3 py-1 bg-amber-500/10 rounded-full border border-amber-500/20"><i class="fa-solid fa-shield mr-1"></i> Inviolable</span>`
+                : `<button onclick="deleteUser('${u.id}')" class="p-2 bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 rounded-xl"><i class="fa-solid fa-trash-can"></i></button>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function handleUserSelfRegister(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('reg-fullname').value.trim();
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
+      const phone = document.getElementById('reg-phone').value.trim();
+
+      // Email uniqueness validation
+      if (state.users.some(u => u.email === email)) {
+        showToast('Este correo electrónico ya está registrado con otra cuenta.', 'error');
+        return;
+      }
+
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        fullName, email, phone, role: ROLES.USER, balance: 0, isSuperAdmin: false
+      };
+
+      state.users.push(newUser);
+      state.activeUserId = newUser.id;
+      saveState();
+      closeModal('modal-register');
+      showToast('¡Registro completado! Bienvenido a RifaMaster PRO.', 'success');
+      renderApp();
+    }
+
+    function openCreateUserModal() {
+      openModal('modal-create-user');
+    }
+
+    function handleAdminCreateUser(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('adm-fullname').value.trim();
+      const email = document.getElementById('adm-email').value.trim().toLowerCase();
+      const phone = document.getElementById('adm-phone').value.trim();
+      const role = document.getElementById('adm-role').value;
+      const balance = parseFloat(document.getElementById('adm-balance').value) || 0;
+
+      if (state.users.some(u => u.email === email)) {
+        showToast('El correo electrónico ya existe.', 'error');
+        return;
+      }
+
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        fullName, email, phone, role, balance, isSuperAdmin: false
+      };
+
+      state.users.push(newUser);
+      saveState();
+      closeModal('modal-create-user');
+      showToast('Usuario asistido creado exitosamente.', 'success');
+      renderApp();
+    }
+
+    function deleteUser(userId) {
+      const u = state.users.find(x => x.id === userId);
+      if (!u) return;
+      if (u.isSuperAdmin) return showToast('Acción bloqueada: No se puede eliminar al Super Admin.', 'error');
+
+      if (confirm(`¿Eliminar la cuenta de ${u.fullName}?`)) {
+        state.users = state.users.filter(x => x.id !== userId);
+        saveState();
+        renderApp();
+      }
+    }
+
+    // --- TAB 8: DATOS DE PAGO Y CONFIGURACIÓN ---
+    function loadBusinessConfigForm() {
+      document.getElementById('cfg-alias').value = state.config.alias;
+      document.getElementById('cfg-cbu').value = state.config.cbu;
+      document.getElementById('cfg-holder').value = state.config.holder;
+      document.getElementById('cfg-whatsapp').value = state.config.whatsapp;
+    }
+
+    function handleSaveBusinessConfig(e) {
+      e.preventDefault();
+      state.config.alias = document.getElementById('cfg-alias').value.trim();
+      state.config.cbu = document.getElementById('cfg-cbu').value.trim();
+      state.config.holder = document.getElementById('cfg-holder').value.trim();
+      state.config.whatsapp = document.getElementById('cfg-whatsapp').value.trim();
+
+      saveState();
+      showToast('Datos de pago actualizados correctamente.', 'success');
+      renderApp();
+    }
+
+    // --- TAB 9: AUDITORÍA DE BORRADOS ---
+    function renderAuditTable() {
+      const tbody = document.getElementById('audit-tickets-table-body');
+      const deletedTickets = state.tickets.filter(t => t.status === 'DELETED_BY_USER');
+
+      if (deletedTickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 font-bold">No existen boletos eliminados en el historial de auditoría.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = deletedTickets.map(t => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="p-4 font-bold text-white">${t.userName}</td>
+          <td class="p-4 text-slate-300">${t.raffleTitle}</td>
+          <td class="p-4 font-mono font-bold text-amber-400">#${t.number}</td>
+          <td class="p-4 font-mono text-slate-400 text-xs">${t.ticketCode}</td>
+          <td class="p-4 text-slate-400 text-xs">${t.deletedAt || 'N/A'}</td>
+          <td class="p-4 text-center"><span class="px-3 py-1 text-[10px] bg-amber-500/20 text-amber-300 font-bold rounded-full border border-amber-500/30">Borrado de Cliente (Preservado)</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // --- AUXILIARES ---
+    function openDirectWhatsApp(customMsg = 'Hola, quisiera consultar sobre las rifas') {
+      const phone = state.config.whatsapp || '3888670268';
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      const url = `https://wa.me/549${cleanPhone}?text=${encodeURIComponent(customMsg)}`;
+      window.open(url, '_blank');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-900/95 border-emerald-500 text-emerald-100',
+        error: 'bg-rose-900/95 border-rose-500 text-rose-100',
+        warning: 'bg-amber-900/95 border-amber-500 text-amber-100',
+        info: 'bg-indigo-900/95 border-indigo-500 text-indigo-100'
+      };
+
+      toast.className = `pointer-events-auto p-4 rounded-2xl border backdrop-blur-md shadow-2xl flex items-start gap-3 transition-all duration-300 ${bgColors[type] || bgColors.info}`;
+      toast.innerHTML = `<div class="text-xs font-bold leading-relaxed">${message}</div>`;
+
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3800);
+    }
+  </script>
+</body>
+</html>
